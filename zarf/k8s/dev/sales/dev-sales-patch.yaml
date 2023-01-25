@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales
+  namespace: sales-system
+spec:
+  selector:
+    matchLabels:
+      app: sales
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: sales
+    spec:
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      containers:
+        - name: sales-api
+          resources:
+            limits:
+              cpu: "2000m" # Up to 2 full cores
+            requests:
+              cpu: "1000m" # Use 1 full cores
+        - name: metrics
+          resources:
+            limits:
+              cpu: "500m" # Up to 1/2 full core
+            requests:
+              cpu: "250m" # Use 1/4 full core
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sales-service
+  namespace: sales-system
+spec:
+  selector:
+    app: sales
+  type: ClusterIP
+  ports:
+    - name: sales-api
+      port: 3000
+      targetPort: sales-api
+    - name: sales-api-debug
+      port: 4000
+      targetPort: sales-api-debug
+    - name: metrics
+      port: 3001
+      targetPort: metrics
+    - name: metrics-debug
+      port: 4001
+      targetPort: metrics-debug
