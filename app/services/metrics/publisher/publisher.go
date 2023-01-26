@@ -2,6 +2,7 @@
 package publisher
 
 import (
+	"encoding/json"
 	"go.uber.org/zap"
 	"sync"
 	"time"
@@ -77,4 +78,45 @@ func (p *Publish) update() {
 	for _, pub := range p.publisher {
 		pub(data)
 	}
+}
+
+// Stdout provide our basic publishing.
+type Stdout struct {
+	log *zap.SugaredLogger
+}
+
+// NewStdout initializes stdout for publishing metrics.
+func NewStdout(log *zap.SugaredLogger) *Stdout {
+	return &Stdout{log}
+}
+
+// Publish publishers for writing to stdout.
+func (s *Stdout) Publish(data map[string]any) {
+	rawJSON, err := json.Marshal(data)
+	if err != nil {
+		s.log.Errorw("stdout", "status", "marshal data", "ERROR", err)
+		return
+	}
+
+	var d map[string]any
+	if err := json.Unmarshal(rawJSON, &d); err != nil {
+		s.log.Errorw("stdout", "status", "unmarshal data", "ERROR", err)
+		return
+	}
+
+	// Add heap value into the data set.
+	memStats, ok := (d["memstats"]).(map[string]any)
+	if ok {
+		d["heap"] = memStats["Alloc"]
+	}
+
+	// Remove unnecessary keys.
+	delete(d, "memstats")
+	delete(d, "cmdline")
+
+	out, err := json.MarshalIndent(d, "", "    ")
+	if err != nil {
+		return
+	}
+	s.log.Infow("stdout", "data", string(out))
 }

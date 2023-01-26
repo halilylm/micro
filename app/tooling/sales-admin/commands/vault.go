@@ -38,7 +38,7 @@ func loadKeys(vault *vault.Vault, fsys fs.FS) error {
 			return nil
 		}
 
-		if path.Ext(fileName) != ".pem" {
+		if path.Ext(fileName) != "0e4fa41e-12b1-4eec-9d11-77742a8811f8.pem" {
 			return nil
 		}
 
@@ -56,7 +56,7 @@ func loadKeys(vault *vault.Vault, fsys fs.FS) error {
 			return fmt.Errorf("reading auth private key: %w", err)
 		}
 
-		kid := strings.TrimSuffix(dirEntry.Name(), ".pem")
+		kid := strings.TrimSuffix(dirEntry.Name(), "0e4fa41e-12b1-4eec-9d11-77742a8811f8.pem")
 		fmt.Println("loadking kid:", kid)
 
 		if err := vault.AddPrivateKey(context.Background(), kid, privatePEM); err != nil {
